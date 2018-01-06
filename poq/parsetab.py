@@ -5,9 +5,9 @@ _tabversion = '3.10'
 
 _lr_method = 'LALR'
 
-_lr_signature = 'IDENTITY OBJECT_INDEX ARRAY_ITERATOR ARRAY_INDEX ARRAY_SLICEfilter_chain : filter_chain filter\n                        | filterfilter : IDENTITYfilter : OBJECT_INDEXfilter : ARRAY_ITERATORfilter : ARRAY_INDEXfilter : ARRAY_SLICE'
+_lr_signature = 'DOT L_BRACKET R_BRACKET L_PAREN R_PAREN COLON EQ NUMBER STRING_VALUE FIELD_NAME SELECTfilter_chain : filter_chain filter\n                        | filterfilter : DOTfilter : FIELD_NAMEfilter : L_BRACKET R_BRACKETfilter : L_BRACKET NUMBER R_BRACKETfilter : L_BRACKET NUMBER COLON NUMBER R_BRACKET\n                  | L_BRACKET NUMBER COLON R_BRACKET\n                  | L_BRACKET COLON NUMBER R_BRACKETboolean_eq : filter_chain EQ NUMBER\n                      | filter_chain EQ STRING_VALUEfilter : SELECT L_PAREN boolean_eq R_PAREN'
     
-_lr_action_items = {'IDENTITY':([0,1,2,3,4,5,6,7,8,],[3,3,-2,-3,-4,-5,-6,-7,-1,]),'OBJECT_INDEX':([0,1,2,3,4,5,6,7,8,],[4,4,-2,-3,-4,-5,-6,-7,-1,]),'ARRAY_ITERATOR':([0,1,2,3,4,5,6,7,8,],[5,5,-2,-3,-4,-5,-6,-7,-1,]),'ARRAY_INDEX':([0,1,2,3,4,5,6,7,8,],[6,6,-2,-3,-4,-5,-6,-7,-1,]),'ARRAY_SLICE':([0,1,2,3,4,5,6,7,8,],[7,7,-2,-3,-4,-5,-6,-7,-1,]),'$end':([1,2,3,4,5,6,7,8,],[0,-2,-3,-4,-5,-6,-7,-1,]),}
+_lr_action_items = {'DOT':([0,1,2,3,4,7,8,11,12,16,18,19,20,22,],[3,3,-2,-3,-4,-1,-5,3,-6,3,-8,-9,-12,-7,]),'FIELD_NAME':([0,1,2,3,4,7,8,11,12,16,18,19,20,22,],[4,4,-2,-3,-4,-1,-5,4,-6,4,-8,-9,-12,-7,]),'L_BRACKET':([0,1,2,3,4,7,8,11,12,16,18,19,20,22,],[5,5,-2,-3,-4,-1,-5,5,-6,5,-8,-9,-12,-7,]),'SELECT':([0,1,2,3,4,7,8,11,12,16,18,19,20,22,],[6,6,-2,-3,-4,-1,-5,6,-6,6,-8,-9,-12,-7,]),'$end':([1,2,3,4,7,8,12,18,19,20,22,],[0,-2,-3,-4,-1,-5,-6,-8,-9,-12,-7,]),'EQ':([2,3,4,7,8,12,16,18,19,20,22,],[-2,-3,-4,-1,-5,-6,21,-8,-9,-12,-7,]),'R_BRACKET':([5,9,13,14,17,],[8,12,18,19,22,]),'NUMBER':([5,10,13,21,],[9,14,17,23,]),'COLON':([5,9,],[10,13,]),'L_PAREN':([6,],[11,]),'R_PAREN':([15,23,24,],[20,-10,-11,]),'STRING_VALUE':([21,],[24,]),}
 
 _lr_action = {}
 for _k, _v in _lr_action_items.items():
@@ -16,7 +16,7 @@ for _k, _v in _lr_action_items.items():
       _lr_action[_x][_k] = _y
 del _lr_action_items
 
-_lr_goto_items = {'filter_chain':([0,],[1,]),'filter':([0,1,],[2,8,]),}
+_lr_goto_items = {'filter_chain':([0,11,],[1,16,]),'filter':([0,1,11,16,],[2,7,2,7,]),'boolean_eq':([11,],[15,]),}
 
 _lr_goto = {}
 for _k, _v in _lr_goto_items.items():
@@ -26,11 +26,16 @@ for _k, _v in _lr_goto_items.items():
 del _lr_goto_items
 _lr_productions = [
   ("S' -> filter_chain","S'",1,None,None,None),
-  ('filter_chain -> filter_chain filter','filter_chain',2,'p_filter_chain','ast.py',79),
-  ('filter_chain -> filter','filter_chain',1,'p_filter_chain','ast.py',80),
-  ('filter -> IDENTITY','filter',1,'p_filter_identity','ast.py',88),
-  ('filter -> OBJECT_INDEX','filter',1,'p_filter_object_index','ast.py',92),
-  ('filter -> ARRAY_ITERATOR','filter',1,'p_filter_array_iterator','ast.py',112),
-  ('filter -> ARRAY_INDEX','filter',1,'p_filter_array_index','ast.py',127),
-  ('filter -> ARRAY_SLICE','filter',1,'p_filter_array_slice','ast.py',141),
+  ('filter_chain -> filter_chain filter','filter_chain',2,'p_filter_chain','ast.py',66),
+  ('filter_chain -> filter','filter_chain',1,'p_filter_chain','ast.py',67),
+  ('filter -> DOT','filter',1,'p_filter_identity','ast.py',74),
+  ('filter -> FIELD_NAME','filter',1,'p_filter_object_index','ast.py',78),
+  ('filter -> L_BRACKET R_BRACKET','filter',2,'p_filter_array_iterator','ast.py',82),
+  ('filter -> L_BRACKET NUMBER R_BRACKET','filter',3,'p_filter_array_index','ast.py',86),
+  ('filter -> L_BRACKET NUMBER COLON NUMBER R_BRACKET','filter',5,'p_filter_array_slice','ast.py',90),
+  ('filter -> L_BRACKET NUMBER COLON R_BRACKET','filter',4,'p_filter_array_slice','ast.py',91),
+  ('filter -> L_BRACKET COLON NUMBER R_BRACKET','filter',4,'p_filter_array_slice','ast.py',92),
+  ('boolean_eq -> filter_chain EQ NUMBER','boolean_eq',3,'p_boolean_eq','ast.py',102),
+  ('boolean_eq -> filter_chain EQ STRING_VALUE','boolean_eq',3,'p_boolean_eq','ast.py',103),
+  ('filter -> SELECT L_PAREN boolean_eq R_PAREN','filter',4,'p_filter_select','ast.py',110),
 ]

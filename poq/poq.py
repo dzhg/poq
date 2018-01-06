@@ -1,9 +1,9 @@
-from .ast import PoqParser
+from .processor import PoqProcessor
 
-_parser = PoqParser()
+_processor = PoqProcessor()
 
 
 def _query(path, o):
     """ query the object using path"""
 
-    return _parser.parse(o, path)
+    return _processor.process(o, path)

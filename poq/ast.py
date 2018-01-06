@@ -1,17 +1,11 @@
 import ply.lex as lex
 import ply.yacc as yacc
-import enum
+from .buildins import *
 
 try:
     from poq import parsetab
 except ImportError:
     parsetab = None
-
-
-class PoqDataType(enum.Enum):
-    LIST = "list"
-    DICT = "dict"
-    UNDEF = "undefined"
 
 
 class PoqParser(object):
@@ -23,19 +17,33 @@ class PoqParser(object):
 
     # List of token names.   This is always required
     tokens = (
-        "IDENTITY",
-        "OBJECT_INDEX",
-        "ARRAY_ITERATOR",
-        "ARRAY_INDEX",
-        "ARRAY_SLICE"
+        "DOT",
+        "L_BRACKET",
+        "R_BRACKET",
+        "L_PAREN",
+        "R_PAREN",
+        "COLON",
+        "EQ",
+        "NUMBER",
+        "STRING_VALUE",
+        "FIELD_NAME",
+        "SELECT"
     )
 
+    literals = ":"
+
     # Regular expression rules for simple tokens
-    t_IDENTITY = r"\."
-    t_OBJECT_INDEX = r"\.[a-zA-Z_][a-zA-Z0-9_]*"
-    t_ARRAY_ITERATOR = r"\[\]"
-    t_ARRAY_INDEX = r"\[\d+\]"
-    t_ARRAY_SLICE = r"\[\d*\:\d*\]"
+    t_DOT = r"\."
+    t_L_BRACKET = r"\["
+    t_R_BRACKET = r"\]"
+    t_L_PAREN = r"\("
+    t_R_PAREN = r"\)"
+    t_COLON = r"\:"
+    t_EQ = r"=="
+    t_SELECT = r"select"
+    t_NUMBER = r"[1-9]\d*"
+    t_STRING_VALUE = r"\"[^\"]*\""
+    t_FIELD_NAME = r"\.[a-zA-Z][a-zA-Z0-9_]*"
 
     # A regular expression rule with some action code
     # Note addition of self parameter since we're in a class
@@ -54,107 +62,60 @@ class PoqParser(object):
         t.lexer.skip(1)
 
     # YACC
-    def _get_data_part(self):
-        return self._data[0]
-
-    def _get_data_type(self):
-        return self._data[1]
-
-    def _set_data(self, data, data_type=None):
-        if data_type is None:
-            self._data = (data, self._get_data_type())
-        else:
-            self._data = (data, data_type)
-
-    def _is_current_list(self):
-        return self._data[1] == PoqDataType.LIST
-
-    def _is_current_dict(self):
-        return self._data[1] == PoqDataType.DICT
-
-    def _is_none(self):
-        return self._data[0] is None
-
     def p_filter_chain(self, p):
         """filter_chain : filter_chain filter
                         | filter"""
-        if self._is_none():
-            p[0] = None
+        if len(p) == 2:
+            p[0] = FilterChain([p[1]])
         else:
-            p[0] = self._get_data_part()
-        self._set_data(p[0])
+            p[0] = p[1].append_filter(p[2])
 
     def p_filter_identity(self, p):
-        """filter : IDENTITY"""
-        p[0] = self._get_data_part()
+        """filter : DOT"""
+        p[0] = Identity()
 
     def p_filter_object_index(self, p):
-        """filter : OBJECT_INDEX"""
-        if self._is_none():
-            p[0] = None
-        elif not self._is_current_list():
-            # data is a dict, just get the value for the field
-            field_name = p[1][1:]
-            data_part = self._get_data_part()
-            if field_name in data_part:
-                p[0] = data_part[field_name]
-            else:
-                p[0] = None
-            self._set_data(p[0])
-        elif self._is_current_list():
-            # data is a list, we need to iterator the list and get the value for each element
-            field_name = p[1][1:]
-            data_part = self._get_data_part()
-            p[0] = list(map(lambda x: x.get(field_name, None), data_part))
-            self._set_data(p[0])
+        """filter : FIELD_NAME"""
+        p[0] = DictIndex(p[1][1:])
 
     def p_filter_array_iterator(self, p):
-        """filter : ARRAY_ITERATOR"""
-        data_part = self._get_data_part()
-        if not isinstance(data_part, list):
-            raise TypeError("Expect LIST for filter: ", p)
-
-        if not self._is_current_list():
-            # if it's not a list type, then just change it to list:
-            p[0] = data_part
-            self._set_data(p[0], data_type=PoqDataType.LIST)
-        else:
-            # if it's already a list, we try to flatten it
-            p[0] = [y for x in data_part for y in x]
-            self._set_data(p[0])
+        """filter : L_BRACKET R_BRACKET"""
+        p[0] = ListIterator()
 
     def p_filter_array_index(self, p):
-        """filter : ARRAY_INDEX"""
-        data_part = self._get_data_part()
-
-        if not isinstance(data_part, list):
-            raise TypeError("Expect LIST for filter: ", p)
-
-        idx = int(str(p[1])[1:len(p[1])-1])
-
-        if idx >= len(data_part):
-            raise TypeError("Array index out of bound: ", p)
-        p[0] = data_part[idx]
-        self._set_data(p[0], data_type=PoqDataType.UNDEF)
+        """filter : L_BRACKET NUMBER R_BRACKET"""
+        p[0] = ListIndex(int(p[2]))
 
     def p_filter_array_slice(self, p):
-        """filter : ARRAY_SLICE"""
-        data_part = self._get_data_part()
-        if not isinstance(data_part, list):
-            raise TypeError("Expect LIST for filter: ", p)
+        """filter : L_BRACKET NUMBER COLON NUMBER R_BRACKET
+                  | L_BRACKET NUMBER COLON R_BRACKET
+                  | L_BRACKET COLON NUMBER R_BRACKET"""
+        if len(p) == 6:
+            p[0] = ListSlice(int(p[2], int(p[4])))
+        else:
+            if p[3] == ":":
+                p[0] = ListSlice(int(p[2]), None)
+            else:
+                p[0] = ListSlice(None, int(p[3]))
 
-        parts = str(p[1]).split(":", maxsplit=2)
-        idx_1 = parts[0][1:]
-        idx_2 = parts[1][:len(parts[1])-1]
+    def p_boolean_eq(self, p):
+        """boolean_eq : filter_chain EQ NUMBER
+                      | filter_chain EQ STRING_VALUE"""
+        if p[3][0] == '"':
+            p[0] = BooleanOpEq(p[1], p[3][1:-1])
+        else:
+            p[0] = BooleanOpEq(p[1], int(p[3]))
 
-        p[0] = data_part[idx_1:idx_2]
-        self._set_data(p[0], data_type=PoqDataType.LIST)
+    def p_filter_select(self, p):
+        """filter : SELECT L_PAREN boolean_eq R_PAREN"""
+        p[0] = Select(p[3])
 
     def p_error(self, p):
         if p:
-            print("Syntax error at '%s'" % p.value)
+            print(p)
+            raise SyntaxError("Syntax error at '%s'" % p.value)
         else:
-            print("Syntax error at EOF")
+            raise SyntaxError("Syntax error at EOF")
 
     # Build the lexer
     def build(self):
@@ -169,6 +130,10 @@ class PoqParser(object):
         return result
 
     # Test it output
-    def test(self, data):
-        self.lexer.input(data)
+    def test_lexer(self, script):
+        self.lexer.input(script)
         return [token for token in self.lexer]
+
+    def test_yacc(self, script):
+        result = self.parser.parse(input=script)
+        return result

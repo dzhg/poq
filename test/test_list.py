@@ -40,3 +40,7 @@ class ListTest(unittest.TestCase):
     def test_list_index(self):
         result = poq.query(".[1].one", ListTest.LIST)
         self.assertEqual(ListTest.LIST[1]["one"], result)
+
+    def test_list_slice(self):
+        result = poq.query(".[:2].one", ListTest.LIST)
+        self.assertEqual(list(map(lambda x: x["one"], ListTest.LIST[:2])), result)
