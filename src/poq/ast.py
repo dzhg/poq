@@ -3,7 +3,7 @@ import ply.yacc as yacc
 from .buildins import *
 
 try:
-    from poq import parsetab
+    from src.poq import parsetab
 except ImportError:
     parsetab = None
 

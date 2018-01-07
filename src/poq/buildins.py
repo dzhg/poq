@@ -31,6 +31,7 @@ class DictIndex(Operation):
         self._key = key
 
     def process(self, data: PoqData):
+        print("-----------")
         if data.is_none():
             return data
         elif not data.is_list():

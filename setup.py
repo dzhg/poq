@@ -7,6 +7,8 @@ setup(name='poq',
       description='Python Object Query Utility',
       author='Di Zhang',
       author_email='daniel.di.zhang@gmail.com',
-      packages=['poq'], requires=['ply'],
-      install_requires=["ply>=3.1.0,<4"]
+      packages=['poq'],
+      package_dir={'': 'src'},
+      requires=['ply'],
+      install_requires=["ply>=3.10,<4"]
       )
