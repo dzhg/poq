@@ -46,7 +46,7 @@ _LIST = [
     },
     {
         "name": "Scala",
-        "count": 15,
+        "count": 20,
         "numbers": [23, 52, 11]
     },
     {
