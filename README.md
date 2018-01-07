@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/dzhg/poq.svg?branch=master)](https://travis-ci.org/dzhg/poq)
+
 poq (Python Object Query utility)
 =================================
 
